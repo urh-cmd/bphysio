@@ -127,6 +127,22 @@ Stand: 2026-03-11 (aus gait-analysis-plan.md)
 
 ---
 
+## ✅ Erweiterte Tabellen-Darstellung
+
+| Seite | Spalten / Änderungen |
+|-------|----------------------|
+| Patienten | + Geschlecht, Versicherung (Art + Name), Kontakt getrennt (E-Mail/Telefon) |
+| Ganganalyse | Als Tabelle: Patient, Datum, Status, Frames, Schritte, Cadence, Symmetrie, Aktionen |
+| Zuweiser | + Adresse, Fax, Status (Aktiv/Inaktiv), Praxis als Unterzeile |
+| Behandlungsprotokoll | + Verordnung (Link), Tabellenkopf verstärkt |
+| Akten | Als Tabelle: Titel/Aktenart, Patient, Erstellt, Aktualisiert |
+| Verordnungen | Als Tabelle: Patient, Verordnungsdatum, Nr., Zuweiser, Leistungen, Status |
+| Wiedervorstellungen | Als Tabelle: Erledigt, Patient, Termin, Anlass, Benachrichtigt, Notiz |
+| Trainingspläne | Als Tabelle: Titel, Patient, Beschreibung, Art (Vorlage/Patient), Aktualisiert |
+| Transkription | Als Tabelle: Patient/Erstellt, Status, Fortschritt, Fehlermeldung, Aktionen |
+
+---
+
 ## Offene Punkte
 
 - **Auswertungen:** Detailverbesserungen wie besprochen später

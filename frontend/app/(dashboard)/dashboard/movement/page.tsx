@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { api, MovementSession, Patient } from "@/lib/api";
-import { Activity, Upload, Play, CheckCircle, XCircle, Loader2, Trash2, Video } from "lucide-react";
+import { Upload, Play, CheckCircle, XCircle, Loader2, Trash2, Video } from "lucide-react";
 import Link from "next/link";
 
 export default function MovementPage() {
@@ -265,9 +265,9 @@ export default function MovementPage() {
       </div>
 
       {/* Sessions */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <h2 className="border-b border-slate-200 px-4 py-3 text-lg font-medium text-slate-700">
-          Sessions
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <h2 className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-lg font-semibold text-slate-800">
+          Ganganalyse-Sessions
         </h2>
         {loading ? (
           <div className="flex justify-center py-12">
@@ -278,86 +278,138 @@ export default function MovementPage() {
             Noch keine Sessions. Lade ein Video hoch.
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50"
-              >
-                <div className="flex items-center gap-4">
-                  <Activity className="h-5 w-5 text-slate-400" />
-                  <div>
-                    <p className="font-medium text-slate-800">
-                      {s.patient_name ?? (s.patient_id ? "Unbekannter Patient" : `Ganganalyse · ${new Date(s.created_at).toLocaleDateString("de-DE")}`)}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {s.frame_count ? `${s.frame_count} Frames` : "—"} ·{" "}
-                      {new Date(s.created_at).toLocaleString("de-DE")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  {s.status === "processing" && (
-                    <span className="inline-flex items-center gap-2 text-sm text-amber-600">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Wird verarbeitet…
-                      {s.progress_percent != null && ` ${s.progress_percent}%`}
-                    </span>
-                  )}
-                  {s.status === "pending" && (
-                    <button
-                      onClick={() => handleProcess(s.id)}
-                      disabled={processingId === s.id}
-                      className="inline-flex items-center gap-2 rounded-md bg-primary-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-600 disabled:opacity-50"
-                    >
-                      {processingId === s.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Play className="h-4 w-4" />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Patient / Datum
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Frames
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Schritte
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Cadence
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Symmetrie
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Aktionen
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {sessions.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-medium text-slate-800">
+                          {s.patient_name ?? (s.patient_id ? "Unbekannter Patient" : "—")}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {new Date(s.created_at).toLocaleString("de-DE", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.status === "processing" && (
+                        <span className="inline-flex items-center gap-2 text-sm text-amber-600">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Verarbeitung{s.progress_percent != null ? ` ${s.progress_percent}%` : ""}
+                        </span>
                       )}
-                      {processingId === s.id ? "Wird verarbeitet…" : "Verarbeiten"}
-                    </button>
-                  )}
-                  {s.status === "completed" && (
-                    <a
-                      href={`/dashboard/movement/${s.id}`}
-                      className="inline-flex items-center gap-2 text-green-600 hover:text-green-700"
-                    >
-                      <CheckCircle className="h-5 w-5" />
-                      Ergebnis anzeigen
-                    </a>
-                  )}
-                  {s.status === "failed" && (
-                    <Link
-                      href={`/dashboard/movement/${s.id}`}
-                      className="inline-flex items-center gap-2 text-red-600 hover:text-red-700"
-                      title={s.error_message ?? "Fehlgeschlagen – Details anzeigen"}
-                    >
-                      <XCircle className="h-5 w-5" />
-                      Fehlgeschlagen
-                    </Link>
-                  )}
-                  {s.status === "completed" && s.metrics_json && (
-                    <span className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                      {(s.metrics_json as { step_count?: number }).step_count ?? 0} Schritte |{" "}
-                      {typeof (s.metrics_json as { cadence?: number }).cadence === "number"
+                      {s.status === "pending" && (
+                        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                          Ausstehend
+                        </span>
+                      )}
+                      {s.status === "completed" && (
+                        <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                          Abgeschlossen
+                        </span>
+                      )}
+                      {s.status === "failed" && (
+                        <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-800">
+                          Fehlgeschlagen
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {s.frame_count ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {(s.metrics_json as { step_count?: number })?.step_count ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {typeof (s.metrics_json as { cadence?: number })?.cadence === "number"
                         ? `${(s.metrics_json as { cadence: number }).cadence.toFixed(1)}/min`
                         : "—"}
-                    </span>
-                  )}
-                  {token && (
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      disabled={deleteId === s.id || processingId === s.id}
-                      className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                      title={processingId === s.id ? "Wird verarbeitet" : "Löschen"}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {typeof (s.metrics_json as { symmetry_index?: number })?.symmetry_index === "number"
+                        ? `${(s.metrics_json as { symmetry_index: number }).symmetry_index.toFixed(1)}%`
+                        : (s.metrics_json as { has_asymmetry?: boolean })?.has_asymmetry
+                          ? "Asymmetrie"
+                          : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {s.status === "pending" && (
+                          <button
+                            onClick={() => handleProcess(s.id)}
+                            disabled={processingId === s.id}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-600 disabled:opacity-50"
+                          >
+                            {processingId === s.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Play className="h-4 w-4" />
+                            )}
+                            {processingId === s.id ? "Verarbeitung…" : "Verarbeiten"}
+                          </button>
+                        )}
+                        {(s.status === "completed" || s.status === "failed") && (
+                          <Link
+                            href={`/dashboard/movement/${s.id}`}
+                            className={`inline-flex items-center gap-1.5 text-sm font-medium ${
+                              s.status === "completed"
+                                ? "text-green-600 hover:text-green-700"
+                                : "text-red-600 hover:text-red-700"
+                            }`}
+                          >
+                            {s.status === "completed" ? (
+                              <><CheckCircle className="h-4 w-4" /> Ergebnis</>
+                            ) : (
+                              <><XCircle className="h-4 w-4" /> Details</>
+                            )}
+                          </Link>
+                        )}
+                        {token && (
+                          <button
+                            onClick={() => handleDelete(s.id)}
+                            disabled={deleteId === s.id || processingId === s.id}
+                            className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                            title="Löschen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

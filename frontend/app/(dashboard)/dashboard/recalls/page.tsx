@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { api, Recall, Patient } from "@/lib/api";
-import { Plus, CalendarCheck, CheckCircle, Circle, Trash2 } from "lucide-react";
+import { Plus, CheckCircle, Circle, Trash2 } from "lucide-react";
 
 function canDelete(roles?: string[]): boolean {
   if (!roles?.length) return false;
@@ -125,62 +125,105 @@ export default function RecallsPage() {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {recalls.map((r) => {
-              const isPast = new Date(r.recall_date) < new Date();
-              return (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50"
-                >
-                  <button
-                    onClick={() => handleToggleCompleted(r)}
-                    className="rounded p-1 text-slate-500 hover:bg-slate-100"
-                    title={r.completed ? "Als offen markieren" : "Als erledigt markieren"}
-                  >
-                    {r.completed ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <Circle className="h-5 w-5" />
-                    )}
-                  </button>
-                  <CalendarCheck className="h-5 w-5 text-slate-400" />
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/dashboard/recalls/${r.id}`}
-                      className="font-medium text-slate-800 hover:text-primary-600"
-                    >
-                      {getPatientName(r.patient_id)}
-                    </Link>
-                    <p className="text-sm text-slate-500">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="w-10 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Erledigt
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Patient
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Termin
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Anlass / Grund
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Benachrichtigt
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Hinweis
+                </th>
+                {canDelete(user?.roles) && (
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Aktionen
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {recalls.map((r) => {
+                const isPast = new Date(r.recall_date) < new Date();
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleToggleCompleted(r)}
+                        className="rounded p-1 text-slate-500 hover:bg-slate-100"
+                        title={r.completed ? "Als offen markieren" : "Als erledigt markieren"}
+                      >
+                        {r.completed ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <Circle className="h-5 w-5" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/dashboard/recalls/${r.id}`}
+                        className="font-medium text-slate-800 hover:text-primary-600"
+                      >
+                        {getPatientName(r.patient_id)}
+                      </Link>
+                      {isPast && !r.completed && (
+                        <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                          Überfällig
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
                       {new Date(r.recall_date).toLocaleDateString("de-DE", {
                         weekday: "short",
                         day: "numeric",
                         month: "short",
                         year: "numeric",
                       })}
-                      {r.reason && ` · ${r.reason}`}
-                    </p>
-                  </div>
-                  {isPast && !r.completed && (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-                      Überfällig
-                    </span>
-                  )}
-                  {canDelete(user?.roles) && (
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      disabled={deleteId === r.id}
-                      className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                      title="Löschen"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {r.reason || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          r.notified ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {r.notified ? "Ja" : "Nein"}
+                      </span>
+                    </td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-600">
+                      {r.notes || "—"}
+                    </td>
+                    {canDelete(user?.roles) && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          disabled={deleteId === r.id}
+                          className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                          title="Löschen"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

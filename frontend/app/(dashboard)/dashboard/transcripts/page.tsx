@@ -219,106 +219,118 @@ export default function TranscriptsPage() {
             Noch keine Transkripte. Audio hochladen, um zu starten.
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {transcripts.map((t) => {
-              const patient = patients.find((p) => p.id === t.patient_id);
-              return (
-                <div
-                  key={t.id}
-                  className="flex flex-wrap items-center justify-between gap-4 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileAudio className="h-5 w-5 text-slate-400" />
-                    <div>
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Patient / Erstellt
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Fortschritt
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Fehlermeldung
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Aktionen
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {transcripts.map((t) => {
+                const patient = patients.find((p) => p.id === t.patient_id);
+                return (
+                  <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
                       <Link
                         href={`/dashboard/transcripts/${t.id}`}
-                        className="font-medium text-slate-800 hover:text-primary-600"
+                        className="flex items-center gap-2 font-medium text-slate-800 hover:text-primary-600"
                       >
-                        {patient ? `${patient.last_name}, ${patient.first_name}` : "Transkript"}{" "}
-                        · {new Date(t.created_at).toLocaleDateString("de-DE")}
+                        <FileAudio className="h-4 w-4 shrink-0 text-slate-400" />
+                        <div>
+                          <div>{patient ? `${patient.last_name}, ${patient.first_name}` : "Transkript"}</div>
+                          <div className="text-xs text-slate-500">
+                            {new Date(t.created_at).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                          </div>
+                        </div>
                       </Link>
-                      <p className="text-sm text-slate-500">
-                        {patient ? `${patient.last_name}, ${patient.first_name}` : "—"} ·{" "}
-                        {new Date(t.created_at).toLocaleString("de-DE")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        t.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : t.status === "failed"
-                            ? "bg-red-100 text-red-800"
-                            : t.status === "transcribing"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-slate-100 text-slate-700"
-                      }`}
-                      title={t.status === "failed" ? t.error_message || undefined : undefined}
-                    >
-                      {t.status}
-                    </span>
-                    {t.status === "failed" && t.error_message && (
-                      <span className="text-xs text-red-600 truncate max-w-[200px]" title={t.error_message}>
-                        {t.error_message}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          t.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : t.status === "failed"
+                              ? "bg-red-100 text-red-800"
+                              : t.status === "transcribing"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        {t.status === "completed" ? "Abgeschlossen" : t.status === "failed" ? "Fehlgeschlagen" : t.status === "transcribing" ? "Transkribiert…" : "Ausstehend"}
                       </span>
-                    )}
-                    {t.status === "pending" && (
-                      <button
-                        onClick={() => handleProcess(t.id)}
-                        disabled={processingId === t.id}
-                        className="inline-flex items-center gap-1 rounded bg-primary-500 px-2 py-1 text-xs text-white hover:bg-primary-600 disabled:opacity-50"
-                      >
-                        {processingId === t.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Mic className="h-3 w-3" />
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.status === "transcribing" && (
+                        <div className="flex min-w-[100px] items-center gap-2">
+                          <Loader2 className="h-3 w-3 shrink-0 animate-spin text-amber-600" />
+                          <div className="flex-1">
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                              <div
+                                className="h-full bg-primary-500 transition-all"
+                                style={{ width: `${Math.min(100, t.progress_percent ?? 0)}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-slate-600">{t.progress_percent ?? 0}%</span>
+                          </div>
+                        </div>
+                      )}
+                      {t.status !== "transcribing" && "—"}
+                    </td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-sm text-red-600" title={t.error_message}>
+                      {t.status === "failed" && t.error_message ? t.error_message : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {t.status === "pending" && (
+                          <button
+                            onClick={() => handleProcess(t.id)}
+                            disabled={processingId === t.id}
+                            className="inline-flex items-center gap-1 rounded bg-primary-500 px-2 py-1 text-xs text-white hover:bg-primary-600 disabled:opacity-50"
+                          >
+                            {processingId === t.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mic className="h-3 w-3" />}
+                            Transkribieren
+                          </button>
                         )}
-                        Transkribieren
-                      </button>
-                    )}
-                    {t.status === "transcribing" && (
-                      <div className="flex min-w-[120px] flex-col gap-1">
-                        <div className="flex items-center gap-2 text-amber-600">
-                          <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
-                          <span className="text-xs">
-                            {t.progress_percent != null
-                              ? `${t.progress_percent}%`
-                              : "Transkribiert…"}
-                          </span>
-                        </div>
-                        <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200">
-                          <div
-                            className="h-full bg-primary-500 transition-all duration-300"
-                            style={{ width: `${Math.min(100, t.progress_percent ?? 0)}%` }}
-                          />
-                        </div>
+                        {(t.status === "completed" || t.status === "failed") && (
+                          <Link
+                            href={`/dashboard/transcripts/${t.id}`}
+                            className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                          >
+                            <Play className="h-4 w-4" />
+                            Anzeigen
+                          </Link>
+                        )}
+                        {canDelete(user?.roles) && (
+                          <button
+                            onClick={() => handleDelete(t.id)}
+                            disabled={deleteId === t.id}
+                            className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                            title="Löschen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                    )}
-                    {(t.status === "completed" || t.status === "failed") && (
-                      <Link
-                        href={`/dashboard/transcripts/${t.id}`}
-                        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
-                      >
-                        <Play className="h-4 w-4" />
-                        Anzeigen
-                      </Link>
-                    )}
-                    {canDelete(user?.roles) && (
-                      <button
-                        onClick={() => handleDelete(t.id)}
-                        disabled={deleteId === t.id}
-                        className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                        title="Löschen"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

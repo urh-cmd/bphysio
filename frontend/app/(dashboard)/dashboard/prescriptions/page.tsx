@@ -67,45 +67,75 @@ export default function PrescriptionsPage() {
             Keine Verordnungen. Neue Verordnung anlegen.
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {prescriptions.map((p) => {
-              const patient = patients.find((x) => x.id === p.patient_id);
-              return (
-                <Link
-                  key={p.id}
-                  href={`/dashboard/prescriptions/${p.id}`}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
-                >
-                  <div>
-                    <p className="font-medium text-slate-800">
-                      {patient
-                        ? `${patient.last_name}, ${patient.first_name}`
-                        : "—"}
-                    </p>
-                    <p className="text-sm text-slate-500">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Patient
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Verordnungsdatum
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Verordnungsnr.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Zuweiser
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Leistungen
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {prescriptions.map((p) => {
+                const patient = patients.find((x) => x.id === p.patient_id);
+                return (
+                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/dashboard/prescriptions/${p.id}`}
+                        className="font-medium text-slate-800 hover:text-primary-600"
+                      >
+                        {patient ? `${patient.last_name}, ${patient.first_name}` : "—"}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
                       {new Date(p.prescription_date).toLocaleDateString("de-DE")}
-                      {p.prescription_number && ` · ${p.prescription_number}`}
-                      {p.zuweiser_name && ` · ${p.zuweiser_name}`}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {p.items.map((i) => `${i.service_code} × ${i.quantity}`).join(", ")}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      p.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : p.status === "used"
-                          ? "bg-slate-100 text-slate-700"
-                          : "bg-amber-100 text-amber-800"
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+                      {p.valid_until && (
+                        <div className="text-xs text-slate-500">gültig bis {new Date(p.valid_until).toLocaleDateString("de-DE")}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {p.prescription_number || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {p.zuweiser_name || "—"}
+                    </td>
+                    <td className="max-w-[240px] px-4 py-3 text-sm text-slate-600">
+                      {p.items.map((i) => `${i.service_code} × ${i.quantity}`).join(", ") || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          p.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : p.status === "used"
+                              ? "bg-slate-100 text-slate-700"
+                              : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {p.status === "active" ? "Aktiv" : p.status === "used" ? "Verbraucht" : p.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

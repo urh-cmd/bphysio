@@ -112,25 +112,28 @@ export default function TreatmentLogsPage() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="border-b border-slate-200 bg-white">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Patient
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Datum
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Leistung
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Dauer
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Verordnung
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Notiz
                 </th>
                 {canDelete(user?.roles) && (
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Aktionen
                   </th>
                 )}
@@ -138,7 +141,7 @@ export default function TreatmentLogsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {logs.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50">
+                <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3">
                     <Link
                       href={`/dashboard/treatment-logs/${t.id}`}
@@ -155,6 +158,18 @@ export default function TreatmentLogsPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
                     {t.duration_minutes != null ? `${t.duration_minutes} Min` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    {t.prescription_id ? (
+                      <Link
+                        href={`/dashboard/prescriptions/${t.prescription_id}`}
+                        className="text-primary-600 hover:underline"
+                      >
+                        Verordnung #{t.prescription_id.slice(0, 8)}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="max-w-xs truncate px-4 py-3 text-sm text-slate-600">
                     {t.note || "—"}

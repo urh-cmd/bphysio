@@ -85,25 +85,31 @@ export default function PatientsPage() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Geburtsdatum
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
-                  E-Mail / Telefon
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Geschlecht
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Kontakt
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Versicherung
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Aktionen
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {patients.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50">
+                <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3">
                     <Link
                       href={`/dashboard/patients/${p.id}`}
@@ -113,10 +119,24 @@ export default function PatientsPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
-                    {p.date_of_birth || "—"}
+                    {p.date_of_birth ? new Date(p.date_of_birth).toLocaleDateString("de-DE") : "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
-                    {p.email || p.phone || "—"}
+                    {p.gender === "m" ? "Männlich" : p.gender === "f" ? "Weiblich" : p.gender === "d" ? "Divers" : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    <div className="space-y-0.5">
+                      {p.email && <div>{p.email}</div>}
+                      {p.phone && <div className="text-slate-500">{p.phone}</div>}
+                      {!p.email && !p.phone && "—"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    <div className="space-y-0.5">
+                      {p.insurance_type && <div>{p.insurance_type}</div>}
+                      {p.insurance_name && <div className="text-slate-500">{p.insurance_name}</div>}
+                      {!p.insurance_type && !p.insurance_name && "—"}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">

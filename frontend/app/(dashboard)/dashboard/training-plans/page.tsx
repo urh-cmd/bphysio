@@ -112,45 +112,82 @@ export default function TrainingPlansPage() {
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {plans.map((p) => {
-              const patient = patients.find((x) => x.id === p.patient_id);
-              return (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50"
-                >
-                  <Link href={`/dashboard/training-plans/${p.id}`} className="flex min-w-0 flex-1 items-center gap-4">
-                    <ClipboardList className="h-5 w-5 shrink-0 text-slate-400" />
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-800">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Titel
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Patient
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Beschreibung
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Art
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Aktualisiert
+                </th>
+                {canDelete(user?.roles) && (
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Aktionen
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {plans.map((p) => {
+                const patient = patients.find((x) => x.id === p.patient_id);
+                return (
+                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/dashboard/training-plans/${p.id}`}
+                        className="flex items-center gap-2 font-medium text-slate-800 hover:text-primary-600"
+                      >
+                        <ClipboardList className="h-4 w-4 shrink-0 text-slate-400" />
                         {p.title}
-                        {p.is_template && (
-                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">
-                            Vorlage
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {patient ? `${patient.last_name}, ${patient.first_name}` : "—"} ·{" "}
-                        {new Date(p.updated_at).toLocaleDateString("de-DE")}
-                      </p>
-                    </div>
-                  </Link>
-                  {canDelete(user?.roles) && (
-                    <button
-                      onClick={(e) => handleDelete(p.id, e)}
-                      disabled={deleteId === p.id}
-                      className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                      title="Löschen"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {patient ? `${patient.last_name}, ${patient.first_name}` : "—"}
+                    </td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-600">
+                      {p.description || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.is_template ? (
+                        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Vorlage
+                        </span>
+                      ) : (
+                        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                          Patient
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {new Date(p.updated_at).toLocaleDateString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                    </td>
+                    {canDelete(user?.roles) && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={(e) => handleDelete(p.id, e)}
+                          disabled={deleteId === p.id}
+                          className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                          title="Löschen"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

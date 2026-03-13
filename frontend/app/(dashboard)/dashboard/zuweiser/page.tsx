@@ -90,42 +90,67 @@ export default function ZuweiserPage() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Arzt / Praxis
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Fachrichtung
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Kontakt
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Adresse
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Aktionen
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {items.map((z) => (
-                <tr key={z.id} className="hover:bg-slate-50">
+                <tr key={z.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3">
                     <Link
                       href={`/dashboard/zuweiser/${z.id}`}
                       className="flex items-center gap-2 font-medium text-slate-800 hover:text-primary-600"
                     >
-                      <Stethoscope className="h-4 w-4 text-slate-400" />
-                      {displayName(z)}
-                      {z.practice_name && (
-                        <span className="font-normal text-slate-500">· {z.practice_name}</span>
-                      )}
+                      <Stethoscope className="h-4 w-4 shrink-0 text-slate-400" />
+                      <div>
+                        <div>{displayName(z)}</div>
+                        {z.practice_name && (
+                          <div className="text-xs font-normal text-slate-500">{z.practice_name}</div>
+                        )}
+                      </div>
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
                     {z.specialization || "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
-                    {z.phone || z.email || "—"}
+                    <div className="space-y-0.5">
+                      {z.phone && <div>{z.phone}</div>}
+                      {z.email && <div className="text-slate-500">{z.email}</div>}
+                      {z.fax && <div className="text-xs text-slate-400">Fax: {z.fax}</div>}
+                      {!z.phone && !z.email && !z.fax && "—"}
+                    </div>
+                  </td>
+                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-600">
+                    {z.address || "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                        z.is_active ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {z.is_active ? "Aktiv" : "Inaktiv"}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
