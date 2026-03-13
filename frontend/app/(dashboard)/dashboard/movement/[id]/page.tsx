@@ -238,7 +238,7 @@ export default function MovementDetailPage({
                   href={`/dashboard/patients/${session.patient_id}`}
                   className="font-semibold text-slate-800 hover:text-primary-600 hover:underline"
                 >
-                  {session.patient_id}
+                  {session.patient_name ?? "Unbekannter Patient"}
                 </Link>
               ) : (
                 <p className="font-semibold text-slate-800">—</p>
