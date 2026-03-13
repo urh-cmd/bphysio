@@ -577,7 +577,7 @@ function TabKeypoint({
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }}
-                  formatter={(value: number) => [value?.toFixed(1) ?? "—", "Pixel"]}
+                  formatter={(value: unknown) => [typeof value === "number" ? value.toFixed(1) : "—", "Pixel"]}
                   labelFormatter={(label) => `Zeit: ${Number(label).toFixed(2)} s`}
                 />
                 <Line
@@ -615,7 +615,7 @@ function TabKeypoint({
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }}
-                  formatter={(value: number) => [value?.toFixed(1) ?? "—", "Pixel"]}
+                  formatter={(value: unknown) => [typeof value === "number" ? value.toFixed(1) : "—", "Pixel"]}
                   labelFormatter={(label) => `Zeit: ${Number(label).toFixed(2)} s`}
                 />
                 <Line
@@ -656,7 +656,7 @@ function TabKeypoint({
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }}
-                  formatter={(value: number) => [value != null ? (value * 100).toFixed(1) + "%" : "—", "Confidence"]}
+                  formatter={(value: unknown) => [typeof value === "number" ? (value * 100).toFixed(1) + "%" : "—", "Confidence"]}
                   labelFormatter={(label) => `Zeit: ${Number(label).toFixed(2)} s`}
                 />
                 <Line
@@ -1145,7 +1145,7 @@ function TabAnalyse({
                 <XAxis type="number" unit=" cm" tick={{ fill: "#64748b", fontSize: 12 }} domain={[0, "auto"]} axisLine={{ stroke: "#e2e8f0" }} />
                 <YAxis type="category" dataKey="name" tick={{ fill: "#64748b", fontSize: 12 }} width={44} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={CHART_TOOLTIP.contentStyle} formatter={(v: unknown) => (typeof v === "number" ? `${v.toFixed(1)} cm` : String(v))} />
-                <Bar dataKey="value" maxBarSize={28} radius={[0, 4, 4, 0]} label={{ position: "right", fill: "#475569", fontSize: 12, formatter: (v: number) => `${v.toFixed(1)} cm` }}>
+                <Bar dataKey="value" maxBarSize={28} radius={[0, 4, 4, 0]} label={{ position: "right", fill: "#475569", fontSize: 12, formatter: (v: unknown) => (typeof v === "number" ? `${v.toFixed(1)} cm` : String(v ?? "")) }}>
                   <Cell fill="#0EA5E9" />
                   <Cell fill="#06B6D4" />
                 </Bar>
@@ -1200,7 +1200,7 @@ function TabSymmetrie({ metrics }: { metrics: Record<string, unknown> }) {
             <XAxis type="number" unit=" cm" tick={{ fill: "#64748b", fontSize: 12 }} domain={[0, "auto"]} axisLine={{ stroke: "#e2e8f0" }} />
             <YAxis type="category" dataKey="name" tick={{ fill: "#64748b", fontSize: 12 }} width={44} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={CHART_TOOLTIP.contentStyle} formatter={(v: unknown) => (typeof v === "number" ? `${v.toFixed(1)} cm` : String(v))} />
-            <Bar dataKey="value" maxBarSize={28} radius={[0, 4, 4, 0]} label={{ position: "right", fill: "#475569", fontSize: 12, formatter: (v: number) => `${v.toFixed(1)} cm` }}>
+            <Bar dataKey="value" maxBarSize={28} radius={[0, 4, 4, 0]} label={{ position: "right", fill: "#475569", fontSize: 12, formatter: (v: unknown) => (typeof v === "number" ? `${v.toFixed(1)} cm` : String(v ?? "")) }}>
               <Cell fill="#0EA5E9" />
               <Cell fill="#06B6D4" />
             </Bar>
