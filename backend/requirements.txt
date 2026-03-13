@@ -1,0 +1,42 @@
+# FastAPI & Server
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Database
+sqlalchemy>=2.0.25
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+alembic>=1.13.0
+
+# Auth
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
+
+# Validation & Config
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+email-validator>=2.0.0
+
+# Utilities
+python-multipart>=0.0.6
+uuid7>=0.1.0
+
+# Movement / Ganganalyse
+numpy>=1.24.0
+opencv-python-headless>=4.8.0
+ultralytics>=8.0.0
+
+# KI-Bericht
+openai>=1.0.0
+
+# Transkription (Open-Source, lokal, kein Abo)
+faster-whisper>=1.0.0
+pydub>=0.25.0
+
+# PDF-Report
+reportlab>=4.0.0
+
+# Tests (optional, für CI/Lokal)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+httpx>=0.25.0

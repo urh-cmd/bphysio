@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bpyhsio-db
+    environment:
+      POSTGRES_USER: bpyhsio
+      POSTGRES_PASSWORD: bpyhsio_local
+      POSTGRES_DB: bpyhsio
+    ports:
+      - "5432:5432"
+    volumes:
+      - bpyhsio_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bpyhsio"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bpyhsio-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://bpyhsio:bpyhsio_local@db:5432/bpyhsio
+      UPLOAD_DIR: /app/data/uploads
+      PROCESSED_DIR: /app/data/processed
+      # Ollama auf Host (Docker Desktop): host.docker.internal
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+    volumes:
+      - bpyhsio_uploads:/app/data/uploads
+      - bpyhsio_processed:/app/data/processed
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8001
+    container_name: bpyhsio-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8001
+      NEXT_PUBLIC_BACKEND_URL: http://backend:8001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  bpyhsio_data:
+  bpyhsio_uploads:
+  bpyhsio_processed:

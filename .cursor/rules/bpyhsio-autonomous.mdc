@@ -1,0 +1,25 @@
+---
+description: Autonome Umsetzung des BPyhsio-Projekts – minimale Rückfragen
+alwaysApply: true
+---
+
+# BPyhsio – Autonomer Workflow
+
+## Umsetzung
+
+- Bei Implementierung: Schrittweise vorgehen, ohne Rückfrage bei jedem einzelnen Schritt.
+- Nur fragen bei: Sicherheitsrelevantem (Credentials, Secrets), externen Kosten, großen Architekturänderungen.
+- Nach jedem Meilenstein: Kurze Zusammenfassung + Testanleitung.
+
+## Projekt-Kontext
+
+- **Pfad:** c:\Users\Nutzer\BPyhsio
+- **Stack:** FastAPI, Next.js 14, PostgreSQL, Alembic
+- **Branding:** BroPhysio (Lucide Activity-Icon + Schriftzug)
+- **Plan:** Siehe BPyhsio Full-Stack Plan
+
+## Konventionen
+
+- Deutsch: UI-Texte, Kommentare
+- Code: Englisch (Variablen, Funktionen)
+- Im Zweifel: Plan konsultieren, dann entscheiden

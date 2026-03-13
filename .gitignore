@@ -1,0 +1,13 @@
+# Data & uploads
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+
+# Node
+node_modules/
+.next/
