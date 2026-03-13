@@ -32,14 +32,20 @@ def _mask(key: str, value: str | None) -> str | None:
     return value[:4] + "***" + value[-4:]
 
 
+_DEFAULT_PROVIDER = "nvidia"
+_DEFAULT_MODELS = {"ollama": "llama3.2", "nvidia": "moonshotai/kimi-k2.5", "openai": "gpt-4o-mini"}
+
+
 async def get_app_settings(db: AsyncSession) -> dict[str, Any]:
     """Liest alle App-Einstellungen aus DB, Fallback auf env."""
     result = await db.execute(select(AppSetting).where(AppSetting.key.in_(KEYS)))
     rows = {r.key: r.value for r in result.scalars().all()}
+    provider = rows.get("llm_provider") or _DEFAULT_PROVIDER
+    model = rows.get("llm_model") or _DEFAULT_MODELS.get(provider, "llama3.2")
 
     return {
-        "llm_provider": rows.get("llm_provider") or "ollama",
-        "llm_model": rows.get("llm_model") or "llama3.2",
+        "llm_provider": provider,
+        "llm_model": model,
         "openai_api_key": rows.get("openai_api_key") or settings.OPENAI_API_KEY or "",
         "nvidia_api_key": rows.get("nvidia_api_key") or settings.NVIDIA_API_KEY or "",
     }
@@ -49,10 +55,12 @@ async def get_app_settings_for_llm(db: AsyncSession) -> dict[str, Any]:
     """Einstellungen für LLM-Router (echte Keys, nicht maskiert)."""
     result = await db.execute(select(AppSetting).where(AppSetting.key.in_(KEYS)))
     rows = {r.key: r.value for r in result.scalars().all()}
+    provider = rows.get("llm_provider") or _DEFAULT_PROVIDER
+    model = rows.get("llm_model") or _DEFAULT_MODELS.get(provider, "llama3.2")
 
     return {
-        "llm_provider": rows.get("llm_provider") or "ollama",
-        "llm_model": rows.get("llm_model") or "llama3.2",
+        "llm_provider": provider,
+        "llm_model": model,
         "openai_api_key": rows.get("openai_api_key") or settings.OPENAI_API_KEY or "",
         "nvidia_api_key": rows.get("nvidia_api_key") or settings.NVIDIA_API_KEY or "",
     }

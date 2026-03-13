@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const API_BASE =
   typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL
@@ -18,15 +18,43 @@ const SKELETON: SkeletonEdge[] = [
 ];
 
 const COLORS = {
-  left: "rgba(0, 150, 255, 0.95)",      // Blau – linke Körperseite
-  right: "rgba(255, 80, 180, 0.95)",    // Magenta – rechte Körperseite
-  center: "rgba(0, 230, 230, 0.95)",    // Cyan – Rumpf/Übergang
-  kpHigh: "rgba(0, 230, 118, 1)",       // Grün – hohe Confidence
-  kpMid: "rgba(255, 214, 0, 1)",        // Gold – mittlere Confidence
-  kpLow: "rgba(255, 90, 90, 1)",        // Rot – niedrige Confidence
+  left: "rgba(0, 150, 255, 0.95)",
+  right: "rgba(255, 80, 180, 0.95)",
+  center: "rgba(0, 230, 230, 0.95)",
+  kpHigh: "rgba(0, 230, 118, 1)",
+  kpMid: "rgba(255, 214, 0, 1)",
+  kpLow: "rgba(255, 90, 90, 1)",
 };
 
 type KeypointFrame = { frame: number; timestamp: number; keypoints: [number, number, number][] };
+
+function buildFrameLookup(frames: KeypointFrame[]): (videoFrame: number) => [number, number, number][] | null {
+  if (!frames.length) return () => null;
+  const kpList = frames.map((f) => f.keypoints ?? []);
+  const frameNums = frames.map((f) => f.frame);
+  const maxFrame = Math.max(...frameNums, 0);
+
+  const getIdx = (vf: number): number => {
+    if (vf <= frameNums[0]) return 0;
+    if (vf >= frameNums[frameNums.length - 1]) return frameNums.length - 1;
+    let lo = 0;
+    let hi = frameNums.length - 1;
+    while (lo < hi - 1) {
+      const mid = (lo + hi) >> 1;
+      if (frameNums[mid] <= vf) lo = mid;
+      else hi = mid;
+    }
+    return Math.abs(frameNums[lo] - vf) <= Math.abs(frameNums[hi] - vf) ? lo : hi;
+  };
+
+  const lastKp = kpList[kpList.length - 1] ?? null;
+  return (videoFrame: number) => {
+    if (videoFrame < 0) return null;
+    if (videoFrame > maxFrame) return lastKp;
+    const idx = getIdx(videoFrame);
+    return kpList[idx] ?? null;
+  };
+}
 
 export function PoseVideoPlayer({
   sessionId,
@@ -44,12 +72,12 @@ export function PoseVideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const urlRef = useRef<string | null>(null);
+  const lastFrameRef = useRef<number>(-1);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const totalFrames = frames.length;
-  const kpList = frames.map((f) => f.keypoints ?? []);
+  const getKeypointsForVideoFrame = useMemo(() => buildFrameLookup(frames), [frames]);
 
   useEffect(() => {
     if (!token || !sessionId) return;
@@ -83,7 +111,7 @@ export function PoseVideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !videoUrl || totalFrames === 0) return;
+    if (!video || !canvas || !videoUrl || !frames.length) return;
 
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
@@ -91,20 +119,30 @@ export function PoseVideoPlayer({
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
     const drawPose = () => {
       if (canvas.width === 0 || canvas.height === 0) return;
-      const frame = Math.min(Math.floor(video.currentTime * fps), totalFrames - 1);
-      if (frame < 0 || !kpList[frame]) return;
-      const kps = kpList[frame];
+      const videoFrame = Math.floor(video.currentTime * fps);
+      if (videoFrame < 0) return;
+      const kps = getKeypointsForVideoFrame(videoFrame);
+      if (!kps?.length) return;
       const vw = video.videoWidth;
       const vh = video.videoHeight;
       if (!vw || !vh) return;
-      const sx = canvas.width / vw;
-      const sy = canvas.height / vh;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cw = canvas.width;
+      const ch = canvas.height;
+      scale = Math.min(cw / vw, ch / vh);
+      const drawW = vw * scale;
+      const drawH = vh * scale;
+      offsetX = (cw - drawW) / 2;
+      offsetY = (ch - drawH) / 2;
 
-      // Skelett-Linien – professionelles Farbschema (Links/Rechts/Mitte)
+      ctx.clearRect(0, 0, cw, ch);
+
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.lineWidth = 3;
@@ -115,22 +153,20 @@ export function PoseVideoPlayer({
         if (!a || !b || (a[2] ?? 0) < minConfidence || (b[2] ?? 0) < minConfidence) continue;
         ctx.strokeStyle = COLORS[side];
         ctx.beginPath();
-        ctx.moveTo(a[0] * sx, a[1] * sy);
-        ctx.lineTo(b[0] * sx, b[1] * sy);
+        ctx.moveTo(offsetX + a[0] * scale, offsetY + a[1] * scale);
+        ctx.lineTo(offsetX + b[0] * scale, offsetY + b[1] * scale);
         ctx.stroke();
       }
 
-      // Keypoint-Punkte – Confidence-basiert (hoch=grün, mittel=gold, niedrig=rot)
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(255,255,255,0.6)";
       for (let i = 0; i < kps.length; i++) {
         const k = kps[i];
         if (!k || (k[2] ?? 0) < minConfidence) continue;
         const conf = k[2] ?? 1;
-        const fillColor = conf >= 0.8 ? COLORS.kpHigh : conf >= 0.5 ? COLORS.kpMid : COLORS.kpLow;
-        const x = k[0] * sx;
-        const y = k[1] * sy;
-        ctx.fillStyle = fillColor;
-        ctx.strokeStyle = "rgba(255,255,255,0.6)";
-        ctx.lineWidth = 1.5;
+        ctx.fillStyle = conf >= 0.8 ? COLORS.kpHigh : conf >= 0.5 ? COLORS.kpMid : COLORS.kpLow;
+        const x = offsetX + k[0] * scale;
+        const y = offsetY + k[1] * scale;
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fill();
@@ -144,21 +180,35 @@ export function PoseVideoPlayer({
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
+        lastFrameRef.current = -1;
         drawPose();
       }
     };
 
     let rafId: number;
     const loop = () => {
-      drawPose();
+      const videoFrame = Math.floor(video.currentTime * fps);
+      if (videoFrame !== lastFrameRef.current) {
+        lastFrameRef.current = videoFrame;
+        drawPose();
+      }
       if (!video.paused && !video.ended) {
         rafId = requestAnimationFrame(loop);
       }
     };
 
-    const onPlay = () => { loop(); };
-    const onPause = () => { cancelAnimationFrame(rafId); drawPose(); };
-    const onSeeked = () => drawPose();
+    const onPlay = () => {
+      lastFrameRef.current = -1;
+      loop();
+    };
+    const onPause = () => {
+      cancelAnimationFrame(rafId);
+      drawPose();
+    };
+    const onSeeked = () => {
+      lastFrameRef.current = -1;
+      drawPose();
+    };
 
     video.addEventListener("loadedmetadata", resizeCanvas);
     video.addEventListener("play", onPlay);
@@ -178,7 +228,7 @@ export function PoseVideoPlayer({
       video.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("resize", resizeCanvas);
     };
-  }, [videoUrl, kpList, fps, totalFrames, minConfidence]);
+  }, [videoUrl, frames.length, getKeypointsForVideoFrame, fps, minConfidence]);
 
   const seek = (delta: number) => {
     const video = videoRef.current;
@@ -204,18 +254,18 @@ export function PoseVideoPlayer({
 
   return (
     <div className="space-y-4">
-      <div className="relative inline-block max-w-full overflow-hidden rounded-lg bg-black">
+      <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg bg-black">
         <video
           ref={videoRef}
           src={videoUrl}
           controls
-          className="block max-w-full"
+          className="block max-w-full object-contain"
           playsInline
         />
         <canvas
           ref={canvasRef}
           className="pointer-events-none absolute left-0 top-0"
-          style={{ width: "100%", height: "100%" }}
+          style={{ width: "100%", height: "100%", willChange: "transform", transform: "translateZ(0)" }}
         />
       </div>
 

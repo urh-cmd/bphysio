@@ -384,7 +384,7 @@ async def seed():
         # App-Einstellungen
         llm = (await db.execute(select(AppSetting).where(AppSetting.key == "llm_provider"))).scalar_one_or_none()
         if not llm:
-            db.add(AppSetting(key="llm_provider", value="ollama"))
+            db.add(AppSetting(key="llm_provider", value="nvidia"))
             db.add(AppSetting(key="llm_model", value="llama3.2"))
             await db.flush()
 

@@ -124,11 +124,15 @@ def calculate_gait_phases(
 
 def detect_heel_strikes(
     keypoints_data: List[Dict], fps: float = 30.0,
-    min_step_interval_ms: float = 200.0
+    min_step_interval_ms: float = 200.0,
+    effective_fps: float | None = None,
 ) -> Tuple[List[int], List[int]]:
-    """Erkennt Fersenkontakt (Heel Strike) links und rechts."""
+    """Erkennt Fersenkontakt (Heel Strike) links und rechts.
+    effective_fps: Bei Frame-Sampling die tatsächliche Keypoint-Rate (z.B. 10 bei jedem 3. Frame von 30fps).
+    """
     left_strikes, right_strikes = [], []
-    min_frame_interval = int((min_step_interval_ms / 1000.0) * fps)
+    rate = effective_fps if effective_fps and effective_fps > 0 else fps
+    min_frame_interval = max(1, int((min_step_interval_ms / 1000.0) * rate))
     left_y_history, right_y_history = [], []
 
     for i, frame in enumerate(keypoints_data):
@@ -159,6 +163,29 @@ def detect_heel_strikes(
         return strikes
 
     return find_strikes(left_y_history), find_strikes(right_y_history)
+
+
+def estimate_pixel_to_cm(keypoints_data: List[Dict], ref_cm: float = 80.0) -> float:
+    """Schätzt pixel_to_cm aus Hüfte–Knöchel-Abstand (Referenz ~80cm für Erwachsene)."""
+    if not keypoints_data or ref_cm <= 0:
+        return 1.0
+    dists = []
+    for frame in keypoints_data[:min(30, len(keypoints_data))]:
+        kps = frame.get("keypoints", [])
+        if len(kps) >= 17:
+            for side in [(11, 15), (12, 16)]:
+                a, b = kps[side[0]], kps[side[1]]
+                if len(a) >= 2 and len(b) >= 2 and (a[2] if len(a) > 2 else 1) > 0.3 and (b[2] if len(b) > 2 else 1) > 0.3:
+                    d = np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+                    if d > 10:
+                        dists.append(d)
+    if not dists:
+        return 1.0
+    mean_px = float(np.median(dists))
+    if mean_px < 5:
+        return 1.0
+    ratio = ref_cm / mean_px
+    return float(np.clip(ratio, 0.05, 3.0))
 
 
 def calculate_step_lengths(
@@ -245,23 +272,42 @@ def analyze_gait(
     fps: float = 30.0,
     duration_seconds: float = None,
     pixel_to_cm: float = 1.0,
+    effective_fps: float | None = None,
+    auto_calibrate: bool = True,
 ) -> GaitMetrics:
-    """Vollständige Ganganalyse."""
+    """Vollständige Ganganalyse.
+    effective_fps: Bei Frame-Sampling die tatsächliche Keypoint-Rate.
+    auto_calibrate: pixel_to_cm aus Hüfte-Knöchel-Abstand schätzen, falls pixel_to_cm=1.0.
+    """
     metrics = GaitMetrics()
     if not keypoints_data:
         return metrics
 
-    left_strikes, right_strikes = detect_heel_strikes(keypoints_data, fps)
+    if auto_calibrate and pixel_to_cm == 1.0:
+        pixel_to_cm = estimate_pixel_to_cm(keypoints_data)
+
+    left_strikes, right_strikes = detect_heel_strikes(
+        keypoints_data, fps, effective_fps=effective_fps
+    )
     total_steps = len(left_strikes) + len(right_strikes)
     metrics.step_count = total_steps
 
     if duration_seconds and duration_seconds > 0:
         metrics.cadence = (total_steps / duration_seconds) * 60
 
-    if len(left_strikes) > 1 and fps > 0:
-        metrics.step_time_left = float(np.mean(np.diff(left_strikes) / fps))
-    if len(right_strikes) > 1 and fps > 0:
-        metrics.step_time_right = float(np.mean(np.diff(right_strikes) / fps))
+    def step_time_from_timestamps(strikes: List[int]) -> float:
+        if len(strikes) < 2:
+            return 0.0
+        dts = []
+        for i in range(len(strikes) - 1):
+            t1 = keypoints_data[strikes[i]].get("timestamp")
+            t2 = keypoints_data[strikes[i + 1]].get("timestamp")
+            if t1 is not None and t2 is not None:
+                dts.append(float(t2) - float(t1))
+        return float(np.mean(dts)) if dts else 0.0
+
+    metrics.step_time_left = step_time_from_timestamps(left_strikes)
+    metrics.step_time_right = step_time_from_timestamps(right_strikes)
 
     phases = calculate_gait_phases(keypoints_data, left_strikes, right_strikes, fps)
     metrics.double_support_percent = phases["double_support"]

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
@@ -500,20 +501,18 @@ function TabKeypoint({
 }) {
   const numKp = frames.length ? Math.max(...frames.map((f) => f.keypoints?.length ?? 0), 0) : 0;
 
-  const timestamps = frames.map((f) => (typeof f.timestamp === "number" ? f.timestamp : 0));
-  const xVals = frames.map((f) => {
+  const chartData = frames.map((f) => {
     const kp = f.keypoints?.[selectedKp];
-    return typeof kp?.[0] === "number" ? kp[0] : null;
+    const t = typeof f.timestamp === "number" ? f.timestamp : 0;
+    return {
+      time: t,
+      frame: f.frame,
+      x: typeof kp?.[0] === "number" ? kp[0] : null,
+      y: typeof kp?.[1] === "number" ? kp[1] : null,
+      confidence: typeof kp?.[2] === "number" ? kp[2] : null,
+    };
   });
-  const yVals = frames.map((f) => {
-    const kp = f.keypoints?.[selectedKp];
-    return typeof kp?.[1] === "number" ? kp[1] : null;
-  });
-  const confVals = frames.map((f) => {
-    const kp = f.keypoints?.[selectedKp];
-    return typeof kp?.[2] === "number" ? kp[2] : null;
-  });
-  const hasConf = confVals.some((c) => c != null);
+  const hasConf = chartData.some((d) => d.confidence != null);
 
   if (loading) {
     return (
@@ -556,79 +555,122 @@ function TabKeypoint({
         ))}
       </select>
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="h-[350px]">
-          <Plot
-            data={[
-              {
-                x: timestamps,
-                y: xVals,
-                type: "scatter",
-                mode: "lines",
-                name: "X",
-                line: { color: "#0EA5E9", width: 2 },
-              },
-            ]}
-            layout={{
-              ...PLOTLY_LAYOUT,
-              title: "X-Koordinate",
-              xaxis: { ...PLOTLY_LAYOUT.xaxis, title: "Zeit (s)" },
-              yaxis: { ...PLOTLY_LAYOUT.yaxis, title: "Pixel" },
-              height: 350,
-            }}
-            useResizeHandler
-            config={{ responsive: true }}
-            style={{ width: "100%" }}
-          />
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <h4 className="mb-3 text-sm font-medium text-slate-700">X-Koordinate</h4>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  domain={["dataMin", "dataMax"]}
+                  tickFormatter={(v) => v.toFixed(2)}
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                  axisLine={{ stroke: "#94a3b8" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                  axisLine={{ stroke: "#94a3b8" }}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }}
+                  formatter={(value: number) => [value?.toFixed(1) ?? "—", "Pixel"]}
+                  labelFormatter={(label) => `Zeit: ${Number(label).toFixed(2)} s`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="x"
+                  name="X"
+                  stroke="#0EA5E9"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-        <div className="h-[350px]">
-          <Plot
-            data={[
-              {
-                x: timestamps,
-                y: yVals,
-                type: "scatter",
-                mode: "lines",
-                name: "Y",
-                line: { color: "#38BDF8", width: 2 },
-              },
-            ]}
-            layout={{
-              ...PLOTLY_LAYOUT,
-              title: "Y-Koordinate",
-              xaxis: { ...PLOTLY_LAYOUT.xaxis, title: "Zeit (s)" },
-              yaxis: { ...PLOTLY_LAYOUT.yaxis, title: "Pixel" },
-              height: 350,
-            }}
-            useResizeHandler
-            config={{ responsive: true }}
-            style={{ width: "100%" }}
-          />
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <h4 className="mb-3 text-sm font-medium text-slate-700">Y-Koordinate</h4>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  domain={["dataMin", "dataMax"]}
+                  tickFormatter={(v) => v.toFixed(2)}
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                  axisLine={{ stroke: "#94a3b8" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                  axisLine={{ stroke: "#94a3b8" }}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }}
+                  formatter={(value: number) => [value?.toFixed(1) ?? "—", "Pixel"]}
+                  labelFormatter={(label) => `Zeit: ${Number(label).toFixed(2)} s`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="y"
+                  name="Y"
+                  stroke="#38BDF8"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
       {hasConf && (
-        <div className="mt-6 h-[300px]">
-          <Plot
-            data={[
-              {
-                x: timestamps,
-                y: confVals,
-                type: "scatter",
-                mode: "lines",
-                name: "Confidence",
-                line: { color: "#7DD3FC", width: 2 },
-              },
-            ]}
-            layout={{
-              ...PLOTLY_LAYOUT,
-              title: "Confidence über Zeit",
-              xaxis: { ...PLOTLY_LAYOUT.xaxis, title: "Zeit (s)" },
-              yaxis: { ...PLOTLY_LAYOUT.yaxis, title: "Confidence" },
-              height: 300,
-            }}
-            useResizeHandler
-            config={{ responsive: true }}
-            style={{ width: "100%" }}
-          />
+        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <h4 className="mb-3 text-sm font-medium text-slate-700">Confidence über Zeit</h4>
+          <div className="h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  domain={["dataMin", "dataMax"]}
+                  tickFormatter={(v) => v.toFixed(2)}
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                  axisLine={{ stroke: "#94a3b8" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  domain={[0, 1]}
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                  axisLine={{ stroke: "#94a3b8" }}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }}
+                  formatter={(value: number) => [value != null ? (value * 100).toFixed(1) + "%" : "—", "Confidence"]}
+                  labelFormatter={(label) => `Zeit: ${Number(label).toFixed(2)} s`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="confidence"
+                  name="Confidence"
+                  stroke="#7DD3FC"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
     </div>
@@ -801,11 +843,48 @@ function TabPose({
   );
 }
 
+const API_BASE =
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL
+    : "";
+
 function TabKI({ sessionId, token }: { sessionId: string; token?: string }) {
-  const [provider, setProvider] = useState("ollama");
+  const [provider, setProvider] = useState("nvidia");
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handleKiPdfDownload = async () => {
+    if (!token || !report) return;
+    setPdfError(null);
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/movement/sessions/${sessionId}/ai_report_pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ report }),
+      });
+      if (!res.ok) throw new Error(await res.text() || "PDF konnte nicht erstellt werden");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cd = res.headers.get("Content-Disposition");
+      const match = cd?.match(/filename="([^"]+)"/);
+      a.download = match?.[1] ?? `KI-Befundbericht_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : "Unbekannter Fehler");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!token || !sessionId) return;
@@ -855,8 +934,8 @@ function TabKI({ sessionId, token }: { sessionId: string; token?: string }) {
         }}
         className="mb-4 rounded border border-slate-300 px-3 py-2 text-sm"
       >
+        <option value="nvidia">NVIDIA (Kimi K2.5)</option>
         <option value="ollama">Ollama (Lokal)</option>
-        <option value="nvidia">NVIDIA (Kimi K2.5 – Kostenlos)</option>
         <option value="openai">OpenAI</option>
       </select>
       {provider === "ollama" && (
@@ -866,7 +945,7 @@ function TabKI({ sessionId, token }: { sessionId: string; token?: string }) {
       )}
       {provider === "nvidia" && (
         <p className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-          API Key aus Einstellungen wird verwendet. Kimi K2.5 ist kostenlos!
+          API Key aus Einstellungen wird verwendet.
         </p>
       )}
       {provider === "openai" && (
@@ -888,10 +967,51 @@ function TabKI({ sessionId, token }: { sessionId: string; token?: string }) {
         </div>
       )}
       {report && (
-        <div className="mt-6">
-          <h4 className="mb-2 font-medium text-slate-700">Generierter Befundbericht</h4>
-          <div className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 text-slate-700 shadow-sm">
-            {report}
+        <div className="mt-8">
+          <div className="max-w-3xl rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-200/50">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-8 py-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500 text-white">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-base font-semibold text-slate-800">Ganganalyse-Befundbericht</h4>
+                  <p className="text-xs text-slate-500">
+                    {new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleKiPdfDownload}
+                disabled={!token || pdfLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" />
+                {pdfLoading ? "Erstelle…" : "PDF herunterladen"}
+              </button>
+            </div>
+            {pdfError && (
+              <div className="mx-8 mt-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                {pdfError}
+              </div>
+            )}
+            <div className="px-8 py-6 text-slate-600">
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => <h1 className="mb-4 mt-6 border-b border-slate-200 pb-2 text-base font-semibold text-slate-800 first:mt-0">{children}</h1>,
+                  h2: ({ children }) => <h2 className="mb-3 mt-5 text-sm font-semibold uppercase tracking-wide text-slate-700">{children}</h2>,
+                  h3: ({ children }) => <h3 className="mb-2 mt-4 text-sm font-medium text-slate-700">{children}</h3>,
+                  p: ({ children }) => <p className="mb-3 leading-relaxed text-slate-600 last:mb-0">{children}</p>,
+                  ul: ({ children }) => <ul className="mb-4 list-disc space-y-1 pl-5 text-slate-600">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1 pl-5 text-slate-600">{children}</ol>,
+                  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                  strong: ({ children }) => <strong className="font-semibold text-slate-800">{children}</strong>,
+                }}
+              >
+                {report}
+              </ReactMarkdown>
+            </div>
           </div>
         </div>
       )}

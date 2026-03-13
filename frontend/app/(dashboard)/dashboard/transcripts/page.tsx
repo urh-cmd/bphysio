@@ -253,7 +253,7 @@ export default function TranscriptsPage() {
                         <div>
                           <div>{patient ? `${patient.last_name}, ${patient.first_name}` : "Transkript"}</div>
                           <div className="text-xs text-slate-500">
-                            {new Date(t.created_at).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                            {new Date(t.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </div>
                         </div>
                       </Link>

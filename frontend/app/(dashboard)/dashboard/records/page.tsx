@@ -147,7 +147,7 @@ export default function RecordsPage() {
                       {new Date(r.created_at).toLocaleDateString("de-DE")}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">
-                      {new Date(r.updated_at).toLocaleDateString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                      {new Date(r.updated_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
                     {canDelete(user?.roles) && (
                       <td className="px-4 py-3 text-right">

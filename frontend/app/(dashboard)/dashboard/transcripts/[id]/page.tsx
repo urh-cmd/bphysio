@@ -26,7 +26,7 @@ export default function TranscriptDetailPage() {
   const [creatingRecord, setCreatingRecord] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [structureError, setStructureError] = useState<string | null>(null);
-  const [soapProvider, setSoapProvider] = useState("ollama");
+  const [soapProvider, setSoapProvider] = useState("nvidia");
   const [soapModel, setSoapModel] = useState("llama3.2");
   const [llmProviders, setLlmProviders] = useState<{ id: string; label: string; models: string[]; available: boolean }[]>([
     { id: "ollama", label: "Ollama", models: ["llama3.2", "llama3.1", "mistral"], available: true },
@@ -58,7 +58,7 @@ export default function TranscriptDetailPage() {
     }>("/api/llm/providers", { token })
       .then((r) => {
         setLlmProviders(r.providers);
-        setSoapProvider(r.default_provider ?? "ollama");
+        setSoapProvider(r.default_provider ?? "nvidia");
         setSoapModel(r.default_model ?? "llama3.2");
       })
       .catch(() => {});

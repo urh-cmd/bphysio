@@ -21,9 +21,9 @@ const PROVIDER_MODELS: Record<string, string[]> = {
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
+  nvidia: "NVIDIA Kimi K2.5",
   ollama: "Ollama",
   openai: "OpenAI",
-  nvidia: "NVIDIA Kimi K2.5",
 };
 
 export default function SettingsPage() {
@@ -33,16 +33,16 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState<SettingsData>({
-    llm_provider: "ollama",
-    llm_model: "llama3.2",
+    llm_provider: "nvidia",
+    llm_model: "moonshotai/kimi-k2.5",
     openai_api_key: "",
     nvidia_api_key: "",
     openai_configured: false,
     nvidia_configured: false,
   });
   const [form, setForm] = useState({
-    llm_provider: "ollama",
-    llm_model: "llama3.2",
+    llm_provider: "nvidia",
+    llm_model: "moonshotai/kimi-k2.5",
     openai_api_key: "",
     nvidia_api_key: "",
   });

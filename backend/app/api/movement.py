@@ -17,7 +17,7 @@ from app.models.movement import MovementSession
 from app.models.patient import Patient
 from app.services.ai_report import generate_ai_report
 from app.services.settings_service import get_app_settings_for_llm
-from app.services.pdf_report import generate_gait_report_pdf
+from app.services.pdf_report import generate_ai_report_pdf, generate_gait_report_pdf
 from app.services.movement.gait_2d import analyze_gait, generate_clinical_summary
 from app.services.movement.one_euro_filter import apply_one_euro_filter
 from app.services.movement.pose_2d import extract_keypoints_from_video
@@ -153,16 +153,22 @@ async def _do_process_session(session_id: str, db: DbSession):
             lambda: extract_keypoints_from_video(
                 video_path_str,
                 progress_callback=None,
-                max_frames=90,
+                max_frames=180,
             ),
         )
         duration = total_frames / fps if fps > 0 else 0
-        keypoints_data = apply_one_euro_filter(raw_keypoints, fps=fps)
+        n_keypoints = len(raw_keypoints)
+        effective_fps = (n_keypoints / duration) if duration > 0 and n_keypoints > 0 else fps
+        keypoints_data = apply_one_euro_filter(
+            raw_keypoints, fps=effective_fps
+        )
         metrics = analyze_gait(
             keypoints_data,
             fps=fps,
             duration_seconds=duration,
             pixel_to_cm=1.0,
+            effective_fps=effective_fps,
+            auto_calibrate=True,
         )
 
         session.keypoints_2d_json = {"frames": keypoints_data}
@@ -348,6 +354,10 @@ class AIReportRequest(BaseModel):
     model: Optional[str] = None
 
 
+class AIReportPdfRequest(BaseModel):
+    report: str
+
+
 @router.post("/sessions/{session_id}/ai_report")
 async def create_ai_report(
     session_id: str,
@@ -394,6 +404,41 @@ async def create_ai_report(
         raise HTTPException(400, str(e))
     except Exception as e:
         raise HTTPException(500, f"KI-Bericht konnte nicht erstellt werden: {str(e)}")
+
+
+@router.post("/sessions/{session_id}/ai_report_pdf")
+async def create_ai_report_pdf_endpoint(
+    session_id: str,
+    db: DbSession,
+    _user_id: str = Depends(get_current_user_id_required),
+    body: AIReportPdfRequest = Body(...),
+):
+    """KI-Befundbericht als PDF herunterladen."""
+    result = await db.execute(select(MovementSession).where(MovementSession.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(404, "Session nicht gefunden")
+    if session.status != "completed":
+        raise HTTPException(400, "Session muss verarbeitet sein")
+    if not body.report or not body.report.strip():
+        raise HTTPException(400, "Kein Berichtstext angegeben. Bitte zuerst KI-Bericht generieren.")
+
+    patient_id = session.patient_id or "—"
+    created_at = session.created_at.strftime("%d.%m.%Y %H:%M") if session.created_at else None
+    date_str = session.created_at.strftime("%Y-%m-%d") if session.created_at else "unknown"
+
+    pdf_bytes = generate_ai_report_pdf(
+        report=body.report.strip(),
+        patient_id=patient_id,
+        session_id=session_id,
+        created_at=created_at,
+    )
+    filename = f"KI-Befundbericht_{date_str}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/sessions/{session_id}/keypoints")

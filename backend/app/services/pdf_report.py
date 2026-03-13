@@ -188,3 +188,133 @@ def generate_gait_report_pdf(
 
     doc.build(story)
     return buffer.getvalue()
+
+
+def _escape(s: str) -> str:
+    """Escape für ReportLab Paragraph (HTML-Entities)."""
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _bold_to_html(s: str) -> str:
+    """Ersetzt **text** durch <b>text</b> und escaped den Rest."""
+    parts = []
+    i = 0
+    while i < len(s):
+        idx = s.find("**", i)
+        if idx < 0:
+            parts.append(_escape(s[i:]))
+            break
+        parts.append(_escape(s[i:idx]))
+        end = s.find("**", idx + 2)
+        if end >= 0:
+            parts.append("<b>")
+            parts.append(_escape(s[idx + 2:end]))
+            parts.append("</b>")
+            i = end + 2
+        else:
+            parts.append(_escape(s[idx:]))
+            break
+    return "".join(parts)
+
+
+def _markdown_to_reportlab(text: str) -> list:
+    """Konvertiert vereinfachtes Markdown in ReportLab-Story-Elemente."""
+    styles = getSampleStyleSheet()
+    h2_style = ParagraphStyle(
+        "AIH2",
+        parent=styles["Heading2"],
+        fontSize=12,
+        spaceBefore=12,
+        spaceAfter=6,
+    )
+    h3_style = ParagraphStyle(
+        "AIH3",
+        parent=styles["Heading2"],
+        fontSize=11,
+        spaceBefore=8,
+        spaceAfter=4,
+    )
+    body_style = ParagraphStyle("AIBody", parent=styles["Normal"], spaceAfter=6)
+    bullet_style = ParagraphStyle("Bullet", parent=body_style, leftIndent=20, bulletIndent=10)
+
+    story = []
+    for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("## "):
+            story.append(Paragraph(_escape(stripped[3:].replace("**", "")), h2_style))
+        elif stripped.startswith("### "):
+            story.append(Paragraph(_escape(stripped[4:].replace("**", "")), h3_style))
+        elif stripped.startswith("- ") or stripped.startswith("• "):
+            content = _bold_to_html(stripped[2:].strip())
+            story.append(Paragraph(f"• {content}", bullet_style))
+        else:
+            story.append(Paragraph(_bold_to_html(stripped) or " ", body_style))
+    return story
+
+
+def generate_ai_report_pdf(
+    report: str,
+    patient_id: str = "",
+    session_id: str = "",
+    created_at: Optional[str] = None,
+) -> bytes:
+    """
+    Generiert ein PDF aus dem KI-Befundbericht (Markdown-Text).
+
+    Returns:
+        PDF als Bytes
+    """
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=2 * cm,
+        leftMargin=2 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "Title",
+        parent=styles["Heading1"],
+        fontSize=16,
+        spaceAfter=12,
+    )
+    body_style = styles["Normal"]
+
+    story = []
+    story.append(Paragraph("KI-Befundbericht Ganganalyse", title_style))
+    story.append(Spacer(1, 0.3 * cm))
+
+    meta_data = [
+        ["Patient-ID:", patient_id or "—"],
+        ["Session-ID:", session_id or "—"],
+        ["Datum:", created_at or datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M")],
+    ]
+    meta_table = Table(meta_data, colWidths=[4 * cm, 10 * cm])
+    meta_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ]
+        )
+    )
+    story.append(meta_table)
+    story.append(Spacer(1, 0.8 * cm))
+
+    story.extend(_markdown_to_reportlab(report))
+    story.append(Spacer(1, 1 * cm))
+    story.append(
+        Paragraph(
+            "<i>BroPhysio – KI-generierter Befundbericht</i>",
+            ParagraphStyle("footer", parent=body_style, fontSize=8, textColor=colors.grey),
+        )
+    )
+
+    doc.build(story)
+    return buffer.getvalue()

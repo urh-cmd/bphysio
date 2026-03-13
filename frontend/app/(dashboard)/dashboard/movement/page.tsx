@@ -168,14 +168,14 @@ export default function MovementPage() {
       </div>
 
       {/* Upload */}
-      <div className="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-4">
+      <div className="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
+        <div className="border-b border-slate-200 bg-white px-5 py-4">
           <h2 className="text-lg font-semibold text-slate-800">Video hochladen</h2>
           <p className="mt-0.5 text-sm text-slate-500">
             MP4, AVI, MOV oder MKV · Seitliche oder frontale Ansicht · 10–30 Sekunden Gehzeit
           </p>
         </div>
-        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start">
+        <div className="flex flex-col gap-5 bg-white p-5 sm:flex-row sm:items-start">
           {/* Videovorschau */}
           <div className="shrink-0">
             <div className="flex h-36 w-64 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
@@ -265,8 +265,8 @@ export default function MovementPage() {
       </div>
 
       {/* Sessions */}
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <h2 className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-lg font-semibold text-slate-800">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+        <h2 className="border-b border-slate-200 bg-white px-4 py-3 text-lg font-semibold text-slate-800">
           Ganganalyse-Sessions
         </h2>
         {loading ? (
@@ -281,26 +281,26 @@ export default function MovementPage() {
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead>
-                <tr className="bg-slate-50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <tr className="bg-primary-50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Patient / Datum
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Frames
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Schritte
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Cadence
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Symmetrie
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-primary-700">
                     Aktionen
                   </th>
                 </tr>
@@ -314,10 +314,7 @@ export default function MovementPage() {
                           {s.patient_name ?? (s.patient_id ? "Unbekannter Patient" : "—")}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {new Date(s.created_at).toLocaleString("de-DE", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })}
+                          {new Date(s.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
                     </td>
