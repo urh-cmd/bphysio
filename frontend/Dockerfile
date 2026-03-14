@@ -1,15 +1,18 @@
 # BPyhsio Frontend – Next.js
-FROM node:20-alpine AS builder
+# Debian statt Alpine: bessere QEMU-Kompatibilität beim ARM64-Build (GitHub Actions)
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --omit=optional
 
 COPY . .
 
-# Build mit API-URL als Build-Arg (wird zur Laufzeit per Env überschrieben)
-ARG NEXT_PUBLIC_API_URL=http://localhost:8001
+# Build mit Backend-URL (für Docker-Proxy)
+ARG NEXT_PUBLIC_BACKEND_URL=http://backend:8001
+ARG NEXT_PUBLIC_API_URL=
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 RUN npm run build
