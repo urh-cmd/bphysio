@@ -1,6 +1,5 @@
 # BroPhysio
 
-Physiotherapie-Praxis-Software – lokal-first, mit Bewegungsanalyse, KI-Features und DSGVO-Compliance.
 
 ## Stack
 
