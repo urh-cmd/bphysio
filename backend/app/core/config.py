@@ -1,7 +1,7 @@
 """Application configuration."""
 
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic import ConfigDict, model_validator
 
 
 class Settings(BaseSettings):
@@ -38,11 +38,22 @@ class Settings(BaseSettings):
     # cpu | cuda | auto (auto = CUDA wenn verfügbar, sonst CPU)
     FASTER_WHISPER_DEVICE: str = "auto"
 
-    # CORS
+    # CORS – Basis-Origins (lokal)
     CORS_ORIGINS: list[str] = [
         *[f"http://localhost:{p}" for p in range(3000, 3010)],
         *[f"http://127.0.0.1:{p}" for p in range(3000, 3010)],
+        "http://192.168.188.34:3001",
+        "http://192.168.188.34:8001",
     ]
+    # Zusätzliche CORS-Origins für Internet (kommagetrennt, z.B. für Cloudflare Tunnel)
+    CORS_ORIGINS_EXTRA: str = ""
+
+    @model_validator(mode="after")
+    def add_extra_cors_origins(self) -> "Settings":
+        if self.CORS_ORIGINS_EXTRA:
+            extras = [o.strip() for o in self.CORS_ORIGINS_EXTRA.split(",") if o.strip()]
+            self.CORS_ORIGINS = list(self.CORS_ORIGINS) + extras
+        return self
 
 
 settings = Settings()

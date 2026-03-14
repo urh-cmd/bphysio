@@ -1,0 +1,64 @@
+# BPyhsio – Raspberry Pi ohne lokalen Build (nur Pull)
+# Nutzt vorgebaute ARM64-Images von GitHub Container Registry.
+#
+# Voraussetzung: GitHub Actions hat die Images gebaut (Push auf main/master).
+# GITHUB_OWNER in .env setzen, z.B. GITHUB_OWNER=nutzer (dein GitHub-Benutzername)
+#
+# Start:
+#   docker compose -f docker-compose.pi-pull.yml pull
+#   docker compose -f docker-compose.pi-pull.yml up -d
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bpyhsio-db
+    environment:
+      POSTGRES_USER: bpyhsio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bpyhsio_local}
+      POSTGRES_DB: bpyhsio
+    ports:
+      - "5432:5432"
+    volumes:
+      - bpyhsio_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bpyhsio"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/${GITHUB_OWNER:-urh-cmd}/bpyhsio-backend:latest
+    container_name: bpyhsio-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://bpyhsio:${POSTGRES_PASSWORD:-bpyhsio_local}@db:5432/bpyhsio
+      UPLOAD_DIR: /app/data/uploads
+      PROCESSED_DIR: /app/data/processed
+      CORS_ORIGINS_EXTRA: ${CORS_ORIGINS_EXTRA:-}
+    volumes:
+      - bpyhsio_uploads:/app/data/uploads
+      - bpyhsio_processed:/app/data/processed
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER:-urh-cmd}/bpyhsio-frontend:latest
+    container_name: bpyhsio-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ""
+      NEXT_PUBLIC_BACKEND_URL: http://backend:8001
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+
+volumes:
+  bpyhsio_data:
+  bpyhsio_uploads:
+  bpyhsio_processed:

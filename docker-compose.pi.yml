@@ -1,0 +1,26 @@
+# BPyhsio – Raspberry Pi (ARM64)
+# Voraussetzung: Raspberry Pi OS 64-Bit, Pi 4/5 mit 4GB+ RAM
+#
+# Start: docker compose -f docker-compose.yml -f docker-compose.pi.yml up -d --build
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    # Pi: Speicherlimit optional (verhindert OOM bei 4GB RAM)
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+      args:
+        NEXT_PUBLIC_API_URL: ""
