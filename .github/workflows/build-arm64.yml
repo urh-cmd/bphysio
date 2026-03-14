@@ -85,6 +85,7 @@ jobs:
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
           build-args: |
+            NEXT_PUBLIC_BACKEND_URL=http://backend:8001
             NEXT_PUBLIC_API_URL=
           cache-from: type=gha
           cache-to: type=gha,mode=max
