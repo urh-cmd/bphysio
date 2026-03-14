@@ -55,6 +55,4 @@ cd frontend && npm run test
 - `POST /api/movement/process/{id}` – Session verarbeiten (YOLO + Ganganalyse)
 - `GET /api/movement/sessions` – Sessions auflisten
 
-## Projektplan
 
-Siehe `.cursor/plans/` bzw. BPyhsio Full-Stack Plan.
